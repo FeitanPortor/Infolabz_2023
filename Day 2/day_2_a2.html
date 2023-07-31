@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>COVID-19 Data</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa; /* Set default light mode background */
+        }
+
+        body.dark-mode {
+            background-color: #343a40; /* Set dark mode background */
+            color: #ffffff; /* Set dark mode text color */
+        }
+
+        .container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="modeToggle" class="btn btn-primary mb-3">Switch Mode</button>
+        <table id="covidTable" class="table table-dark table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Daily Confirmed</th>
+                    <th>Daily Deceased</th>
+                    <th>Daily Recovered</th>
+                    <th>Total Confirmed</th>
+                    <th>Total Deceased</th>
+                    <th>Total Recovered</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let darkMode = false;
+
+        function toggleDarkMode() {
+            const body = document.body;
+            body.classList.toggle("dark-mode");
+            darkMode = !darkMode;
+        }
+
+        async function fetchData() {
+            const response = await fetch("https://data.covid19india.org/data.json");
+            const data = await response.json();
+            const timeSeriesData = data["cases_time_series"];
+            return timeSeriesData;
+        }
+
+        function calculateTotals(timeSeriesData) {
+            let totalConfirmed = 0;
+            let totalDeceased = 0;
+            let totalRecovered = 0;
+
+            timeSeriesData.forEach(entry => {
+                totalConfirmed += parseInt(entry.totalconfirmed);
+                totalDeceased += parseInt(entry.totaldeceased);
+                totalRecovered += parseInt(entry.totalrecovered);
+            });
+
+            return { totalConfirmed, totalDeceased, totalRecovered };
+        }
+
+        async function displayData() {
+            const timeSeriesData = await fetchData();
+            const totals = calculateTotals(timeSeriesData);
+            const tableBody = document.querySelector("#covidTable tbody");
+
+            tableBody.innerHTML = ""; // Clear existing rows
+
+            timeSeriesData.forEach(entry => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = entry.date;
+                row.insertCell().textContent = entry.dailyconfirmed;
+                row.insertCell().textContent = entry.dailydeceased;
+                row.insertCell().textContent = entry.dailyrecovered;
+                row.insertCell().textContent = entry.totalconfirmed;
+                row.insertCell().textContent = entry.totaldeceased;
+                row.insertCell().textContent = entry.totalrecovered;
+            });
+
+            const totalRow = tableBody.insertRow();
+            totalRow.insertCell().textContent = "Total";
+            totalRow.insertCell().textContent = totals.totalConfirmed;
+            totalRow.insertCell().textContent = totals.totalDeceased;
+            totalRow.insertCell().textContent = totals.totalRecovered;
+            totalRow.insertCell(); // Empty cell for alignment
+            totalRow.insertCell(); // Empty cell for alignment
+            totalRow.insertCell(); // Empty cell for alignment
+        }
+
+        const modeToggle = document.getElementById("modeToggle");
+        modeToggle.addEventListener("click", toggleDarkMode);
+
+        displayData();
+    </script>
+</body>
+</html>
